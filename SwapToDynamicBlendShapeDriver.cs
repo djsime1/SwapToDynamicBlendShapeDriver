@@ -39,9 +39,11 @@ public class SwapToDynamicBlendShapeDriver : ResoniteMod
         {
             if (!Config_Enable) return;
 
-            ui.Style.MinHeight = 36;
-            ui.Text("SwapToDynamicBlendShapeDriver");
-            ui.Style.MinHeight = 24;
+            ui.Style.MinHeight = 24f;
+            ui.Text("Swap to DynamicBlendShapeDriver (Mod)").Color.Value = RadiantUI_Constants.Hero.CYAN;
+            ui.Style.MinHeight = 2f;
+            ui.Image(RadiantUI_Constants.Hero.CYAN);
+            ui.Style.MinHeight = 24f;
 
             var newDBSD = ui.Button("Move driven blendshapes into new DynamicBlendShapeDriver");
             var mergeDBSD = ui.Button("Add driven blendshapes into existing DynamicBlendShapeDriver");
