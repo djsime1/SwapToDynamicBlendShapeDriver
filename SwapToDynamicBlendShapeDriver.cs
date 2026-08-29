@@ -11,25 +11,25 @@ public class SwapToDynamicBlendShapeDriver : ResoniteMod
 {
     public override string Name => "SwapToDynamicBlendShapeDriver";
     public override string Author => "djsime1 / Zenuru";
-    public override string Version => "1.0.0";
+    public override string Version => "1.0.2";
     public override string Link => "https://github.com/djsime1/SwapToDynamicBlendShapeDriver";
 
-    public static ModConfiguration? Config;
+    private static ModConfiguration Config;
 
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<bool> enable = new("Enable", "Enable/disable generating buttons under SkinnedMeshRenderer components", () => true);
-    public static bool Config_Enable => Config!.GetValue(enable);
+    public static bool Config_Enable => Config.GetValue(enable);
 
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<bool> skipCommonDrivers = new("SkipCommonDrivers", "Ignore blendshapes driven by common viseme & face/eye tracking components", () => true);
-    public static bool Config_SkipCommonDrivers => Config!.GetValue(skipCommonDrivers);
+    public static bool Config_SkipCommonDrivers => Config.GetValue(skipCommonDrivers);
 
     public override void OnEngineInit()
     {
-        Config = GetConfiguration();
         var harmony = new Harmony("je.dj.SwapToDynamicBlendShapeDriver");
+        Config = GetConfiguration()!;
+        Config.Save(true);
         harmony.PatchAll();
-        Config!.Save(true);
     }
 
     [HarmonyPatch(typeof(SkinnedMeshRenderer), "BuildInspectorUI")]
@@ -48,7 +48,7 @@ public class SwapToDynamicBlendShapeDriver : ResoniteMod
             var newDBSD = ui.Button("Move driven blendshapes into new DynamicBlendShapeDriver");
             var mergeDBSD = ui.Button("Add driven blendshapes into existing DynamicBlendShapeDriver");
 
-            newDBSD.LocalPressed += (btn, data) => {
+            newDBSD.LocalPressed += (btn, _) => {
                 var DBSD = __instance.Slot.AttachComponent<DynamicBlendShapeDriver>();
                 DBSD.Renderer.Target = __instance;
                 var outcome = MigrateDrivenFields(__instance, DBSD);
@@ -56,10 +56,10 @@ public class SwapToDynamicBlendShapeDriver : ResoniteMod
                 if (!outcome) DBSD.Destroy();
             };
 
-            mergeDBSD.LocalPressed += (btn, data) => {
+            mergeDBSD.LocalPressed += (btn, _) => {
                 DynamicBlendShapeDriver? target = null;
                 try {
-                    target = __instance.Slot.GetComponents<DynamicBlendShapeDriver>().First((c) => c.Renderer.Target == __instance);
+                    target = __instance.Slot.GetComponents<DynamicBlendShapeDriver>().First(c => c.Renderer.Target == __instance);
                 }
                 catch (InvalidOperationException) {} // No DBSD found
                 if (target is null) {
@@ -91,7 +91,7 @@ public class SwapToDynamicBlendShapeDriver : ResoniteMod
                 if (!field.IsDriven) continue;
 
                 var hook = field.ActiveLink as FieldDrive<float>;
-                var driver = hook.FindNearestParent<Component>();
+                var driver = hook!.FindNearestParent<Component>();
 
                 if (driver is DynamicBlendShapeDriver) continue;
                 if (Config_SkipCommonDrivers && skipComponents.Contains(driver.GetType())) continue;
